@@ -1,0 +1,107 @@
+***********************************************************************************
+Sequence Diagram
+***********************************************************************************
+@startuml
+actor Клиент as Client
+
+participant "WebhookService" as WH
+participant "FakeProvider" as FP
+participant "Database" as DB
+participant "TransactionService" as TS
+
+
+group Флоу обработки вебхука \n
+
+  FP--> WH: \n POST /api/v1/webhooks (Данные по транзакции)
+
+  WH -> DB: \n Валидируем и сохраняем в БД
+
+  WH-> TS: \n POST /api/v1/transactions/top-up (Данные по транзакции полученные от FakeProvider)
+
+end
+
+@enduml
+
+***********************************************************************************
+ER диаграмма
+***********************************************************************************
+
+@startuml
+' Настройка стиля для ER-диаграммы
+skinparam linetype ortho
+
+' Таблица payment_provider_callbacks
+entity "payment_provider_callbacks" as payment_provider_callbacks {
+    * uid : UUID <<PK>>
+    --
+    created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+    body : TEXT
+    provider_transaction_uid : UUID
+    type : VARCHAR(255)
+    provider : VARCHAR(255)
+}
+
+' Таблица verification_callbacks
+entity "verification_callbacks" as verification_callbacks {
+    * uid : UUID <<PK>>
+    --
+    created_at : TIMESTAMP
+    modified_at : TIMESTAMP
+    body : TEXT
+    transaction_uid : UUID
+    profile_uid : UUID
+    status : VARCHAR(25)
+    type : VARCHAR(255)
+}
+
+' Таблица unknown_callbacks
+entity "unknown_callbacks" as unknown_callbacks {
+    * uid : UUID <<PK>>
+    --
+    created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+    body : TEXT
+}
+
+' Логические связи между таблицами (если они есть)
+payment_provider_callbacks }--|| verification_callbacks : "provider_transaction_uid -> transaction_uid"
+
+@enduml
+***********************************************************************************
+Component Diagram
+***********************************************************************************
+
+@startuml
+' Настройка стиля для ER-диаграммы
+skinparam linetype ortho
+hide methods
+
+component "payments_service" as App {
+
+  [WebHookController] as Controller1 <<RestController>>
+  [WebhookService] as WHS <<Service>>
+  [WebhookAuthenticationService] as WAS <<Service>>
+  [WebhookSenderService] as WSS<<Service>>
+}
+
+database "PostgreSQL" as DB {
+
+  [payment_provider_callbacks] as p_p_c
+  [provider_auth_datas] as p_a_d
+  [unknown_callbacks] as u_c
+  [verification_callbacks] as v_c
+}
+
+interface "REST API" as API
+cloud "TransactionServiceClient" as External
+
+[API Client] --> API : HTTP requests
+API ---> Controller1 : routes
+Controller1 --> WAS : calls
+WAS  --> WHS : calls
+WAS  --> p_a_d: JDBC
+WHS --> p_p_c: JDBC
+WHS --> WSS: calls
+WSS ---> External : API HTTP requests
+@enduml

@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  # Сервис для PostgreSQL
+  db:
+    image: postgres:15
+    container_name: payment_callbacks_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: payment_callbacks_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - payment_callbacks_db_data:/var/lib/postgresql/data # Монтируем том для сохранения данных
+
+
+  app:
+    build:
+      context: . # Путь к Dockerfile приложения (текущая директория)
+      dockerfile: Dockerfile
+    container_name: payment_service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/payment_callbacks_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 1234
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update # Настройка Hibernate (например, update или create)
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data: # Определяем том для хранения данных PostgreSQL
