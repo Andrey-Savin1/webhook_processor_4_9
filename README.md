@@ -30,4 +30,4 @@ Sequence Diagram, ER диаграмма, Component Diagram находятся в
 Создан файл docker-compose.yml и Dockerfile
 Запустить контейнеры командой : docker-compose up --build
 Остановить контейнеры командой : docker-compose down 
-Сервис запускается на порту 8001, Postgres на порту 5432
+Сервис запускается на порту 8002, Postgres на порту 5432

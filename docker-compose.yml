@@ -26,7 +26,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: 1234
       SPRING_JPA_HIBERNATE_DDL_AUTO: update # Настройка Hibernate (например, update или create)
     ports:
-      - "8001:8001"
+      - "8002:8002"
     depends_on:
       - db
 
