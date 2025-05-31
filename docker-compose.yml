@@ -13,13 +13,18 @@ services:
       - "5432:5432"
     volumes:
       - payment_callbacks_db_data:/var/lib/postgresql/data # Монтируем том для сохранения данных
-
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d payment_callbacks_db" ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   app:
     build:
       context: . # Путь к Dockerfile приложения (текущая директория)
       dockerfile: Dockerfile
-    container_name: payment_service
+    container_name: webhook_processor_4_9
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/payment_callbacks_db
       SPRING_DATASOURCE_USERNAME: postgres
@@ -28,7 +33,8 @@ services:
     ports:
       - "8002:8002"
     depends_on:
-      - db
+       db :
+         condition: service_healthy
 
 volumes:
-  postgres_data: # Определяем том для хранения данных PostgreSQL
+  payment_callbacks_db_data: # Определяем том для хранения данных PostgreSQL
